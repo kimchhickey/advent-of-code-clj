@@ -39,4 +39,3 @@
 (= (fuel-amount 14) 2)
 (= (fuel-amount 1969) 966)
 (= (fuel-amount 100756) 50346)
-
