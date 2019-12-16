@@ -4,7 +4,7 @@
             [advent_of_code.util :as util]))
 
 (def input
-  (line-seq (io/reader (io/resource "y2019/d8.test.input"))))
+  (line-seq (io/reader (io/resource "y2019/d8.input"))))
 
 (def n-input
   (map #(Character/digit % 10) (first input)))
@@ -20,47 +20,35 @@
   (fn [layer]
     (get layer 0 0)))
 
+; p1
 (first (sort-by fewer-zero (->> layers
                                 (map frequencies))))
 
-(defn paint [point output]
-  (let [x (get point 0)
-        y (get point 1)
-        canvas (:canvas output)
-        layer (:layer output)
-        val-of-canvas (get (get canvas y) x)
-        val-of-layer (get (get layer y) x)]
-    (if (= 2 val-of-canvas)
-      {:layer layer
-       :canvas (assoc-in canvas [y x] val-of-layer)}
-      output)))
 
-(paint [0 0] {:layer [[1 1 1] [1 1 1]] :canvas [[0 2 2] [2 2 2]]})
-(paint [0 1] {:layer [[1 1 1] [1 1 1]] :canvas [[2 2 2] [2 2 2]]})
-(paint [1 0] {:layer [[1 1 1] [1 1 1]] :canvas [[2 2 2] [2 2 2]]})
-(paint [1 1] {:layer [[1 1 1] [1 1 1]] :canvas [[2 2 2] [2 2 2]]})
-(paint [2 0] {:layer [[1 1 1] [1 1 1]] :canvas [[2 2 2] [2 2 2]]})
-(paint [2 1] {:layer [[1 1 1] [1 1 1]] :canvas [[2 2 2] [2 2 2]]})
-
-(def draw
-  (fn [layer canvas]
-    (let [points (for [x (range 25)
-                       y (range 6)]
-                   [x y])]
-      (reduce paint {:layer layer :canvas canvas} points))))
-
-(draw layer canvas)
+; p2
+(def layers-2d
+  (->> layers
+       (map #(partition width %))))
 
 (defn vec2d
+  "Return an x by y vector with all entries equal to val."
   [x y val]
   (vec (repeat y (vec (repeat x val)))))
 
 (def canvas
-  (vec2d 25 6 2))
+  (vec2d 26 6 2))
 
-(def layer
-  (first (map #(partition 25 %) layers)))
+(defn paint-pixel [p1 p2]
+  (if (= 2 p1)
+    p2
+    p1))
 
-(def o (->> layers
-            (map #(partition 25 %))
-            (reduce draw canvas)))
+(defn paint-row [v1 v2]
+  (map paint-pixel v1 v2))
+
+(def paint
+  (fn [canvas layer]
+    (map paint-row canvas layer)))
+
+(def sol (->> layers-2d
+              (reduce paint canvas)))
