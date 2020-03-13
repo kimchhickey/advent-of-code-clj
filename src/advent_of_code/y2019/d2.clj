@@ -15,28 +15,28 @@
 (defn next [addr]
   (+ 4 addr))
 
-(defn op-1 [current-opcode-index vector]
-  (let [input1 (nth vector (get vector (+ 1 current-opcode-index)))
-        input2 (nth vector  (get vector (+ 2 current-opcode-index)))
-        output-position (get vector (+ 3 current-opcode-index))
-        next-vector (assoc vector output-position (+ input1 input2))]
-    (run (+ 4 current-opcode-index) next-vector)))
+(defn op-1 [curr mem]
+  (let [input1 (get mem (get mem (+ 1 curr)))
+        input2 (get mem  (get mem (+ 2 curr)))
+        output-pos (get mem (+ 3 curr))
+        next-mem (assoc mem output-pos (+ input1 input2))]
+    (run (+ 4 curr) next-mem)))
 
-(defn op-2 [current-opcode-index vector]
-  (let [input1 (nth vector (get vector (+ 1 current-opcode-index)))
-        input2 (nth vector (get vector (+ 2 current-opcode-index)))
-        output-position (get vector (+ 3 current-opcode-index))
-        next-vector (assoc vector output-position (* input1 input2))]
-    (run (+ 4 current-opcode-index) next-vector)))
+(defn op-2 [curr mem]
+  (let [input1 (get mem (get mem (+ 1 curr)))
+        input2 (get mem (get mem (+ 2 curr)))
+        output-pos (get mem (+ 3 curr))
+        next-mem (assoc mem output-pos (* input1 input2))]
+    (run (+ 4 curr) next-mem)))
 
-(defn run [current-opcode-index mem]
-  (case (nth vector addr)
-    1  (op-1 current-opcode-index mem)
-    2  (op-2 current-opcode-index mem)
-    99 (first vector)
+(defn run [curr mem]
+  (case (get mem curr)
+    1  (op-1 curr mem)
+    2  (op-2 curr mem)
+    99 (first mem)
     :something-wrong))
           
-(= 19690720 (sm 0 real-input))
+(run 0 real-input)
 
 ; p2
 (def p2
