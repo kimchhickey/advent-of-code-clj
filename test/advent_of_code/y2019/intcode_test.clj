@@ -25,7 +25,7 @@
          (run 0 [3 9 8 9 10 9 4 9 99 -1 8]))))
 
 (deftest day5-part1
-  (let [file (line-seq (io/reader (io/resource "y2019/d5.input")))
+  #_(let [file (line-seq (io/reader (io/resource "y2019/d5.input")))
         strs (str/split (first file) #",")
         input (map #(Integer/parseInt %) strs)
         program (vec input)]
@@ -75,4 +75,3 @@
           (is (= 999 (:output (run program ip 7 out))))
           (is (= 1000 (:output (run program ip 8 out))))
           (is (= 1001 (:output (run program ip 9 out)))))))))
-
