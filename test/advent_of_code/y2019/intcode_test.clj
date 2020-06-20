@@ -24,7 +24,7 @@
   #_(is (= [3 9 8 9 10 9 4 9 99 -1 8]
          (run 0 [3 9 8 9 10 9 4 9 99 -1 8]))))
 
-(deftest day5-part1
+#_(deftest day5-part1
   #_(let [file (line-seq (io/reader (io/resource "y2019/d5.input")))
         strs (str/split (first file) #",")
         input (map #(Integer/parseInt %) strs)
@@ -33,16 +33,16 @@
       (is (= (:output (run program 0 1 0))
              13933662)))))
 
-(deftest day5-part2
+#_(deftest day5-part2
   (let [ip 0 ; initial instruction pointer
         in 0
         out 0]
     (testing "comparison"
       (testing "opcode 3, 8, 4 using position mode"
         (let [program [3,9,8,9,10,9,4,9,99,-1,8]]
-          (is (= 1 (:output (run program ip 8 out))))
-          (is (= 0 (:output (run program ip 7 out))))
-          (is (= 0 (:output (run program ip 9 out))))))
+          (is (= 1 (:output (run program 0 [8] 0))))
+          (is (= 0 (:output (run program ip [7] out))))
+          (is (= 0 (:output (run program ip [9] out))))))
       (testing "opcode 3, 7, 4 using position mode"
         (let [program [3,9,7,9,10,9,4,9,99,-1,8]]
           (is (= 0 (:output (run program ip 8 out))))
@@ -75,3 +75,18 @@
           (is (= 999 (:output (run program ip 7 out))))
           (is (= 1000 (:output (run program ip 8 out))))
           (is (= 1001 (:output (run program ip 9 out)))))))))
+
+(deftest day7-part1
+  (let [program [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
+        pss [4 3 2 1 0]]
+    (is (= 43210 (thruster-signal program pss 0))))
+  (let [program [3,23,3,24,1002,24,10,24,1002,23,-1,23,
+                 101,5,23,23,1,24,23,23,4,23,99,0,0]
+        pss [0 1 2 3 4]]
+    (is (= 54321 (thruster-signal program pss 0))))
+  (let [program [3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,
+                 1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]
+        pss [1 0 4 3 2]]
+    (is (= 65210 (thruster-signal program pss 0))))
+)
+
