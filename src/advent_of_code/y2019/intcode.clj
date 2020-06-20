@@ -36,7 +36,7 @@
   ; in      : input value
   ; out     : output value
   (do
-    (prn {:program program
+    #_(prn {:program program
           :ip ip
           :in in
           :out out})
@@ -65,7 +65,11 @@
             (run program' ip' in' out))
         4 (let [rst-val (read-param (+ ip 1) program mode-p1)
                 ip' (+ 2 ip)]
-            (run program ip' in rst-val))
+            {:status :doing
+             :program program
+             :ip ip'
+             :in in
+             :out rst-val})
         5 (let [p1 (read-param (+ ip 1) program mode-p1)
                 p2 (read-param (+ ip 2) program mode-p2)
                 ip' (if (not= 0 p1)
@@ -94,8 +98,11 @@
                            (assoc program p3 0))
                 ip' (+ 4 ip)]
             (run program' ip' in out))
-        99 {:output out
-            :program program} ; should increase ip +1?
+        99 {:status :finished
+            :program program
+            :ip ip
+            :in in
+            :out out} ; should increase ip +1?
         ))))
 
 (defn thruster-signal
@@ -112,7 +119,46 @@
             out (run program 0 [fi in] 0)]
         (thruster-signal program (rest pss) (:output out))))))
 
-(time (first (reverse (sort-by :signal
+(let [program [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
+               27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
+      a (run program 0 [9 0] 0)
+      b (run program 0 [8 (:out a)] 0)
+      c (run program 0 [7 (:out b)] 0)
+      d (run program 0 [6 (:out c)] 0)
+      e (run program 0 [5 (:out d)] 0)]
+  (feedback-loop a b c d e))
+
+(defn d7p2
+  [s]
+  (let [a (run program 0 [(nth s 0) 0] 0)
+        b (run program 0 [(nth s 1) (:out a)] 0)
+        c (run program 0 [(nth s 2) (:out b)] 0)
+        d (run program 0 [(nth s 3) (:out c)] 0)
+        e (run program 0 [(nth s 4) (:out d)] 0)]
+    (feedback-loop a b c d e)))
+
+#_(first (reverse (sort-by :out (map d7p2 (combo/permutations [5 6 7 8 9])))))
+
+(defn feedback-loop
+  [a b c d e]
+  (do
+    (prn a)
+    (prn b)
+    (prn c)
+    (prn d)
+    (prn e)
+    (let [a (run (:program a) (:ip a) [(:out e)] (:out a))
+          b (run (:program b) (:ip b) [(:out a)] (:out b))
+          c (run (:program c) (:ip c) [(:out b)] (:out c))
+          d (run (:program d) (:ip d) [(:out c)] (:out d))
+          e (run (:program e) (:ip e) [(:out d)] (:out e))]
+      (if (= :finished (:status e))
+        e
+        (feedback-loop a b c d e)))))
+
+#_(run [3 26 1001 26 -4 26 3 27 1002 27 2 27 1 27 26 27 4 27 1001 28 -1 28 1005 28 6 99 5 5 5] 18 [129] 0)
+
+#_(time (first (reverse (sort-by :signal
                                 (map (fn [s]
                                        {:permutation s
                                         :signal (thruster-signal program s 0)}) (combo/permutations [0 1 2 3 4]))))))
