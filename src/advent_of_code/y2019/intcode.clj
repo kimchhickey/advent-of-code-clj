@@ -5,105 +5,142 @@
             [clojure.math.combinatorics :as combo]))
 
 (def program
-  (let [code (-> "y2019/d7.input"
+  (let [code (-> "y2019/d9.input"
                        (io/resource)
                        (io/reader)
                        (line-seq)
                        (first))]
-    (vec (map #(Integer/parseInt %) (str/split code #",")))))
+    (map #(Integer/parseInt %) (str/split code #","))))
+
+#_(:out (run (->map program) 0 [2] [] 0))
+
+(defn ->map
+  [v]
+  (into (sorted-map) (zipmap (iterate inc 0)
+                      v)))
 
 (defn ->opcode-and-mode
   [code]
-  (let [s (vec (map #(Character/digit % 10) (take 5 (concat (reverse (str code)) (iterate identity \0)))))] 
+  (let [s (vec (map #(Character/digit % 10) (take 5 (concat (reverse (str code)) (iterate identity \0)))))]
     {:opcode (Integer/parseInt (str (nth s 1) (nth s 0)))
      :mode-p1 (nth s 2)
      :mode-p2 (nth s 3)
      :mode-p3 (nth s 4)}))
 
 (defn read-param
-  [ip program mode]
-  (let [value (nth program ip)]
+  [ip program mode rb]
+  (let [value (get program ip)]
     (case mode
       ; 0 -  position mode
-      0 (nth program value)
+      0 (or (get program value) 0)
       ; 1 - immediate mode
-      1 value)))
+      1 value
+      ; 2 - relative mode
+      2 (or (get program (+ rb value)) 0)
+      )))
+
+(defn read-param-default
+  [ip program mode rb]
+  (let [value (get program ip)]
+    (case mode
+      0 value
+      1 value
+      2 (+ rb value))))
 
 (defn run
-  [program ip in out]
+  [program ip in out rb]
   ; program : instructions vector
   ; ip      : instruction pointer
   ; in      : input value
   ; out     : output value
   (do
-    #_(prn {:program program
+    (prn "--------")
+    (prn {:program program
           :ip ip
           :in in
-          :out out})
-    (let [code (nth program ip)
+          :out out
+          :rb rb})
+    (let [code (get program ip)
           {:keys [opcode mode-p1 mode-p2 mode-p3]} (->opcode-and-mode code)]
-      (case opcode
-        1 (let [p1 (read-param (+ ip 1) program mode-p1)
-                p2 (read-param (+ ip 2) program mode-p2)
-                rst-pos (nth program (+ ip 3))
-                rst-val (+ p1 p2)
-                program' (assoc program rst-pos rst-val)
-                ip' (+ 4 ip)]
-            (run program' ip' in out))
-        2 (let [p1 (read-param (+ ip 1) program mode-p1)
-                p2 (read-param (+ ip 2) program mode-p2)
-                rst-pos (nth program (+ ip 3))
-                rst-val (* p1 p2)
-                program' (assoc program rst-pos rst-val)
-                ip' (+ 4 ip)]
-            (run program' ip' in out))
-        3 (let [rst-pos (nth program (+ ip 1))
-                rst-val (first in)
-                in' (rest in)
-                program' (assoc program rst-pos rst-val)
-                ip' (+ 2 ip)]
-            (run program' ip' in' out))
-        4 (let [rst-val (read-param (+ ip 1) program mode-p1)
-                ip' (+ 2 ip)]
-            {:status :doing
-             :program program
-             :ip ip'
-             :in in
-             :out rst-val})
-        5 (let [p1 (read-param (+ ip 1) program mode-p1)
-                p2 (read-param (+ ip 2) program mode-p2)
-                ip' (if (not= 0 p1)
-                      p2
-                      (+ ip 3))]
-            (run program ip' in out))
-        6 (let [p1 (read-param (+ ip 1) program mode-p1)
-                p2 (read-param (+ ip 2) program mode-p2)
-                ip' (if (= 0 p1)
-                      p2
-                      (+ ip 3))]
-            (run program ip' in out))
-        7 (let [p1 (read-param (+ ip 1) program mode-p1)
-                p2 (read-param (+ ip 2) program mode-p2)
-                p3 (nth program (+ ip 3))
-                program' (if (< p1 p2)
-                           (assoc program p3 1)
-                           (assoc program p3 0))
-                ip' (+ 4 ip)]
-            (run program' ip' in out))
-        8 (let [p1 (read-param (+ ip 1) program mode-p1)
-                p2 (read-param (+ ip 2) program mode-p2)
-                p3 (nth program (+ ip 3))
-                program' (if (= p1 p2)
-                           (assoc program p3 1)
-                           (assoc program p3 0))
-                ip' (+ 4 ip)]
-            (run program' ip' in out))
-        99 {:status :finished
-            :program program
-            :ip ip
-            :in in
-            :out out} ; should increase ip +1?
-        ))))
+      (do
+        (prn {:code code
+              :opcode opcode
+              :mode-p1 mode-p1
+              :mode-p2 mode-p2
+              :mode-p3 mode-p3})
+        
+        (case opcode
+          1 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  p2 (read-param (+ ip 2) program mode-p2 rb)
+                  rst-pos (read-param-default (+ ip 3) program mode-p3 rb)
+                  rst-val (+ p1 p2)
+                  program' (assoc program rst-pos rst-val)
+                  ip' (+ 4 ip)]
+              (run program' ip' in out rb))
+          2 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  p2 (read-param (+ ip 2) program mode-p2 rb)
+                  rst-pos (read-param-default (+ ip 3) program mode-p3 rb)
+                  rst-val (* p1 p2)
+                  program' (assoc program rst-pos rst-val)
+                  ip' (+ 4 ip)]
+              (run program' ip' in out rb))
+          3 (let [p1 (read-param-default (+ ip 1) program mode-p1 rb)
+                  rst-val (first in)
+                  in' (rest in)
+                  program' (assoc program p1 rst-val)
+                  ip' (+ 2 ip)]
+              (run program' ip' in' out rb))
+          4 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  ip' (+ 2 ip)
+                  out' (conj out p1)]
+              #_{:status :doing
+                 :program program
+                 :ip ip'
+                 :in in
+                 :out rst-val}
+              (run program ip' in out' rb))
+          5 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  p2 (read-param (+ ip 2) program mode-p2 rb)
+                  ip' (if (not= 0 p1)
+                        p2
+                        (+ ip 3))]
+              (run program ip' in out rb))
+          6 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  p2 (read-param (+ ip 2) program mode-p2 rb)
+                  ip' (if (= 0 p1)
+                        p2
+                        (+ ip 3))]
+              (run program ip' in out rb))
+          7 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  p2 (read-param (+ ip 2) program mode-p2 rb)
+                  p3 (read-param-default (+ ip 3) program mode-p3 rb)
+                  program' (if (< p1 p2)
+                             (assoc program p3 1)
+                             (assoc program p3 0))
+                  ip' (+ 4 ip)]
+              (run program' ip' in out rb))
+          8 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  p2 (read-param (+ ip 2) program mode-p2 rb)
+                  p3 (read-param-default (+ ip 3) program mode-p3 rb)
+                  program' (if (= p1 p2)
+                             (assoc program p3 1)
+                             (assoc program p3 0))
+                  ip' (+ 4 ip)]
+              (run program' ip' in out rb))
+          9 (let [p1 (read-param (+ ip 1) program mode-p1 rb)
+                  rb' (+ rb p1)
+                  ip' (+ 2 ip)]
+              (run program ip' in out rb'))
+          99 {:status :finished
+              :program program
+              :ip ip
+              :in in
+              :out out
+              :rb rb} ; should increase ip +1?
+          )))))
+
+#_(let [program [109, 19, 103, 1985, 204, -34, 99]]
+  (run (->map program) 0 [999] [] 2000))
 
 (defn thruster-signal
   [program
@@ -119,7 +156,7 @@
             out (run program 0 [fi in] 0)]
         (thruster-signal program (rest pss) (:output out))))))
 
-(let [program [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
+#_(let [program [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
                27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
       a (run program 0 [9 0] 0)
       b (run program 0 [8 (:out a)] 0)
@@ -128,7 +165,7 @@
       e (run program 0 [5 (:out d)] 0)]
   (feedback-loop a b c d e))
 
-(defn d7p2
+#_(defn d7p2
   [s]
   (let [a (run program 0 [(nth s 0) 0] 0)
         b (run program 0 [(nth s 1) (:out a)] 0)
@@ -164,6 +201,12 @@
                                         :signal (thruster-signal program s 0)}) (combo/permutations [0 1 2 3 4]))))))
 
 (comment
+  ;; day9 p1
+  (let [program [3,9,8,9,10,9,4,9,99,-1,8]
+        program-map (vec->map program)]
+    (run (= 1 (:out (run program-map 0 [8] 0 0)))))
+
+
   (let [program [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
         pss [4 3 2 1 0]]
     (thruster-signal program pss 0))
