@@ -130,13 +130,23 @@
                   rb' (+ rb p1)
                   ip' (+ 2 ip)]
               (recur program ip' in out rb'))
-          99 {:status :finished
-              :program program
-              :ip ip
-              :in in
-              :out out
-              :rb rb} ; should increase ip +1?
+          99 (->state
+              :finished
+              program
+              ip
+              in
+              out
+              rb)
           )))))
+
+(defn ->state
+  [status program instruction-pointer input output relative-base]
+  {:status status
+   :program program
+   :instruction-pointer instruction-pointer
+   :input input
+   :output output
+   :relative-base relative-base})
 
 (defn thruster-signal
   [program

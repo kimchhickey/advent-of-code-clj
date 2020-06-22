@@ -99,6 +99,11 @@
     (is (= program (:out (run (->map program) 0 [] [] 0)))))
   (let [program [109, 1, 9, 2, 204, -6, 99]]
     (is (= [204] (:out (run (->map program) 0 [] [] 0)))))
+
+  ;;
+  ;; Test Cases from Reddit Post.
+  ;; https://www.reddit.com/r/adventofcode/comments/e8aw9j/2019_day_9_part_1_how_to_fix_203_error/
+  ;; 
   (let [program [109, -1, 4, 1, 99]]
     (is (= [-1] (:out (run (->map program) 0 [] [] 0)))))
   (let [program [109, -1, 104, 1, 99]]
@@ -116,4 +121,3 @@
   (let [program [109, 1, 203, 2, 204, 2, 99]]
     (is (= [999] (:out (run (->map program) 0 [999] [] 0)))))
 )
-
