@@ -7,6 +7,23 @@
 
 (def candidate (range begin end))
 
+;; new version
+(defn ->adjacent [number]
+  (let [s (str number)]
+    (partition 2 (rest (drop-last (interleave s s))))))
+
+(defn adjacent [adj]
+  (not-empty (filter #(= (first %) (second %)) adj)))
+
+(defn decrease [adj]
+  (empty? (filter #(> (int (first %)) (int (second %))) adj)))
+
+(count (->> candidate
+            (map ->adjacent)
+            (filter adjacent)
+            (filter decrease)))
+
+;; old version
 (defn same-adjacent [number]
   (> 6 (count (set (str number)))))
 
@@ -28,8 +45,7 @@
                   (filter never-decrease)
                   (filter no-partial-repeated)))) ;; => "Elapsed time: 2805.213083 msecs"
 
-
-;; transducer lab
+;; transducer version 
 (def xform (comp
             (filter same-adjacent)
             (filter never-decrease)
