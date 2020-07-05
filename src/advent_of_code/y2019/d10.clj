@@ -21,16 +21,6 @@
    []
    (map-indexed vector input)))
 
-(defn x
-  [a b]
-  (+ a b))
-
-(defn y
-  [c]
-  c)
-
-(comp y x)
-
 (def asteroids (->stars input))
 
 (defn slope
@@ -133,3 +123,58 @@ station
                            (map #(count-detected-stars % stars))
                            (into #{})
                            (count)))))
+
+
+
+;; solution using vector -> gift wrapping algorithms? -> no
+;; part 2
+(def station [20 21])
+
+(defn ->polar-coordinate
+  [station asteroids]
+  (->> asteroids
+       (map (fn [asteroid]
+              (let [[x1 y1] station
+                    [x2 y2] asteroid
+                    dx (- x2 x1)
+                    dy (- y2 y1)]
+                {:p asteroid
+                 :r (generic-math/atan2 dy dx)
+                 :a 
+                 (let [a (Math/toDegrees (generic-math/atan2 dy dx))
+                       a' (+ 180 a)]
+                   (if (<= 90 a')
+                     (- a' 90)
+                     (+ a' 270)))
+                 :d (Math/sqrt (+ (* dx dx) (* dy dy)))})))))
+
+(def ast
+  {:s []
+   :r (->> (->polar-coordinate station asteroids)
+           (sort-by (juxt :a :d))
+           (partition-by :a))})
+
+(defn round
+  [ast]
+  (reduce
+   (fn [acc v]
+     (if (nil? v)
+       acc
+       {:s (conj (:s acc) (first v))
+        :r (conj (:r acc) (rest v))}))
+   {:s []
+    :r []}
+   ast))
+
+(defn make-seq
+  [ast]
+  (let [{s :s r :r} ast
+        {s' :s r' :r} (round r)
+        s' (concat s s')
+        r' (filter not-empty r')]
+    (if (or (empty? r') (> (count s') 200))
+      {:s s' :r r'}
+      (recur {:s s' :r r'}))))
+
+(first (drop 199 (map-indexed vector (:s (make-seq ast)))))
+
