@@ -4,20 +4,27 @@
             [advent_of_code.util :as util]
             [clojure.math.combinatorics :as combo]))
 
-(def program
-  (let [code (-> "y2019/d9.input"
-                       (io/resource)
-                       (io/reader)
-                       (line-seq)
-                       (first))]
-    (map #(Integer/parseInt %) (str/split code #","))))
-
-
-
-(defn ->map
-  [v]
+(defn ->memory-map
+  [memory-vec]
   (into (sorted-map) (zipmap (iterate inc 0)
-                      v)))
+                             memory-vec)))
+
+(defn load-intcode-program
+  [path]
+  (let [program (-> path
+                    (io/resource)
+                    (io/reader)
+                    (line-seq)
+                    (first)
+                    (str/split #","))
+        memory-vec (map bigint program)]
+    (->memory-map memory-vec)))
+
+(def day7-program (load-intcode-program "y2019/d7.input"))
+(def day9-program (load-intcode-program "y2019/d9.input"))
+(def day11-program (load-intcode-program "y2019/d11.input"))
+
+
 
 (defn ->opcode-and-mode
   [code]
@@ -215,11 +222,9 @@
         program-map (vec->map program)]
     (run (= 1 (:out (run program-map 0 [8] 0 0)))))
 
-
   (let [program [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
         pss [4 3 2 1 0]]
     (thruster-signal program pss 0))
-
 
   (let [program [3,23,3,24,1002,24,10,24,1002,23,-1,23,
                  101,5,23,23,1,24,23,23,4,23,99,0,0]
