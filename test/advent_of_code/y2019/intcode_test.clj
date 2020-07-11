@@ -90,34 +90,66 @@
     (is (= 65210 (thruster-signal program pss 0))))
 )
 
-(deftest day9-part1
-  (let [program [1102,34915192,34915192,7,4,7,99,0]]
-    (is (= [1219070632396864] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [104,1125899906842624,99]]
-    (is (= [1125899906842624] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]]
-    (is (= program (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109, 1, 9, 2, 204, -6, 99]]
-    (is (= [204] (:out (run (->map program) 0 [] [] 0)))))
+(deftest day9
+  (let [program [1102,34915192,34915192,7,4,7,99,0]
+        program (map bigint program)
+        program (->memory-map program)]
+    (is (= [1219070632396864]
+           (:output (run program 0 [] [] 0)))))
+  (let [program [104,1125899906842624,99]
+        program (->memory-map program)]
+    (is (= [1125899906842624]
+           (:output (run program 0 [] [] 0)))))
+  (let [input [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]
+        program (->memory-map input)]
+    (is (= input
+           (:output (run program 0 [] [] 0)))))
+  (let [program [109, 1, 9, 2, 204, -6, 99]
+        program (->memory-map program)]
+    (is (= [204]
+           (:output (run program 0 [] [] 0)))))
 
-  ;;
-  ;; Test Cases from Reddit Post.
+  (testing "Reddit Cases"
   ;; https://www.reddit.com/r/adventofcode/comments/e8aw9j/2019_day_9_part_1_how_to_fix_203_error/
-  ;; 
-  (let [program [109, -1, 4, 1, 99]]
-    (is (= [-1] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109, -1, 104, 1, 99]]
-    (is (= [1] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109, -1, 204, 1, 99]]
-    (is (= [109] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109, 1, 9, 2, 204, -6, 99]]
-    (is (= [204] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109, 1, 109, 9, 204, -6, 99]]
-    (is (= [204] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109, 1, 209, -1, 204, -106, 99]]
-    (is (= [204] (:out (run (->map program) 0 [] [] 0)))))
-  (let [program [109, 1, 3, 3, 204, 2, 99]]
-    (is (= [998] (:out (run (->map program) 0 [998] [] 0)))))
-  (let [program [109, 1, 203, 2, 204, 2, 99]]
-    (is (= [999] (:out (run (->map program) 0 [999] [] 0)))))
-)
+    (let [program [109, -1, 4, 1, 99]
+          program (->memory-map program)]
+      (is (= [-1]
+             (:output (run program 0 [] [] 0)))))
+    (let [program [109, -1, 104, 1, 99]
+          program (->memory-map program)]
+      (is (= [1]
+             (:output (run program 0 [] [] 0)))))
+    (let [program [109, -1, 204, 1, 99]
+          program (->memory-map program)]
+      (is (= [109]
+             (:output (run program 0 [] [] 0)))))
+    (let [program [109, 1, 9, 2, 204, -6, 99]
+          program (->memory-map program)]
+      (is (= [204] 
+             (:output (run program 0 [] [] 0)))))
+    (let [program [109, 1, 109, 9, 204, -6, 99]
+          program (->memory-map program)]
+      (is (= [204]
+             (:output (run program 0 [] [] 0)))))
+    (let [program [109, 1, 209, -1, 204, -106, 99]
+          program (->memory-map program)]
+      (is (= [204]
+             (:output (run program 0 [] [] 0)))))
+    (let [program [109, 1, 3, 3, 204, 2, 99]
+          program (->memory-map program)]
+      (is (= [998]
+             (:output (run program 0 [998] [] 0)))))
+    (let [program [109, 1, 203, 2, 204, 2, 99]
+          program (->memory-map program)]
+      (is (= [999]
+             (:output (run program 0 [999] [] 0))))))
+
+
+  (let [day9-program (load-intcode-program "y2019/d9.input")]
+    (testing "Part 1"
+      (is (= [2457252183]
+             (:output (run program 0 [1] [] 0)))))
+    #_(testing "Part 2"
+        (is (= [70634]
+               (:output (run program 0 [2] [] 0)))))) ; take a long time
+  )

@@ -24,8 +24,6 @@
 (def day9-program (load-intcode-program "y2019/d9.input"))
 (def day11-program (load-intcode-program "y2019/d11.input"))
 
-
-
 (defn ->opcode-and-mode
   [code]
   (let [s (vec (map #(Character/digit % 10) (take 5 (concat (reverse (str code)) (iterate identity \0)))))]
@@ -70,7 +68,7 @@
     (let [code (get program ip)
           {:keys [opcode mode-p1 mode-p2 mode-p3]} (->opcode-and-mode code)]
       (do
-        #_(prn {:code code
+       #_(prn {:code code
               :opcode opcode
               :mode-p1 mode-p1
               :mode-p2 mode-p2
@@ -155,6 +153,21 @@
    :output output
    :relative-base relative-base})
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (defn thruster-signal
   [program
    pss
@@ -216,12 +229,14 @@
 ;; day7 part 2
 #_(:out (run (->map program) 0 [2] [] 0))
 
-(comment
-  ;; day9 p1
-  (let [program [3,9,8,9,10,9,4,9,99,-1,8]
-        program-map (vec->map program)]
-    (run (= 1 (:out (run program-map 0 [8] 0 0)))))
 
+
+(let [program [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]]
+  (= program (:output (run (->memory-map program) 0 [] [] 0))))
+
+
+
+(comment
   (let [program [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
         pss [4 3 2 1 0]]
     (thruster-signal program pss 0))
