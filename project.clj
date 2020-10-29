@@ -7,4 +7,5 @@
                  [org.clojure/math.combinatorics "0.1.6"]
                  [org.clojure/algo.generic "0.1.3"]
                  [org.clojure/math.numeric-tower "0.0.4"]]
-  :resource-paths ["resources" "resources"])
+  :resource-paths ["resources" "resources"]
+  :plugins [[lein-cljfmt "0.7.0"]])

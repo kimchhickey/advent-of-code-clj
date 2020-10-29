@@ -5,18 +5,31 @@
 (def input
   (line-seq (io/reader (io/resource "y2018/d1.input"))))
 
+(def num-input (map read-string input))
+
 ; p1
-(apply + (map read-string input))
+(time (apply + num-input))
 
 ; p2 - solution 1
 (reduce
-  (fn [result freq]
-    (let [curr (+ (or (last result) 0) freq)]
-      (if (some #(= curr %) result)
-        (reduced curr)
-        (conj result curr))))
-  []
-  (cycle (map read-string input)))
+ (fn [result freq]
+   (let [curr (+ (or (last result) 0) freq)]
+     (if (result curr)
+       (reduced curr)
+       (conj result curr))))
+ {}
+ (cycle num-input))
+
+(defn find-first-duplicate [xs]
+  (let [result (reduce (fn [seen x]
+                         (if (seen x)
+                           (reduced x)
+                           (conj seen x)))
+                       #{}
+                       xs)]
+    (if (set? result)
+      nil
+      result)))
 
 ; p2 - solution 2
-(util/first-duplicate (reductions + (cycle (map read-string input))))
+(time (find-first-duplicate (reductions + (cycle num-input))))
