@@ -41,8 +41,8 @@
                 (= :begin type) (assoc acc :current-gid gid)
                 :else (let [gid (:current-gid acc)]
                         (if (contains? acc gid)
-                          (assoc acc gid (conj (get acc gid) time))
-                          (assoc acc gid [time]))))))
+                          (assoc acc gid (conj (get acc gid) itm))
+                          (assoc acc gid [itm]))))))
           {:current-gid nil}
           data))
 
@@ -57,15 +57,36 @@
 
 (defn total-slept [m]
   (let [[k v] m
-        t (->> (partition 2 v)
-               (map (fn [[start end]] (t/in-minutes (t/interval start end)))))]
+        p (partition 2 v)
+        total (->> p
+                   (map (fn [[start end]]
+                          (t/in-minutes (t/interval (:time start) (:time end))))))
+        minutes-raw (->> p
+                         (map (fn [[start end]]
+                                (range (:minute start)
+                                       (:minute end)))))
+        minutes (->> minutes-raw
+                     flatten
+                     frequencies
+                     (sort-by second)
+                     last)]
     {:gid k
-     :total (apply + t)}))
+     :total (apply + total)
+     :minute (first minutes)
+     :freq (second minutes)}))
 
-; the guard who spent the most minutes asleep
+; p1 - 1
+; the guard who spent the most minutes asleep : #2441
 (->> (map total-slept data)
-     (sort-by :total)) ; #2441
+     (sort-by :freq)
+     last)
+
+;; p1
+(* 2441 39)
+
+;; p2
+(* 239 33)
 
 (comment
-  
+
   )
