@@ -55,7 +55,7 @@
            aggregate-by-gid)
       (dissoc :current-gid)))
 
-(defn total-slept [m]
+(defn ->total-and-minutes [m]
   (let [[k v] m
         p (partition 2 v)
         total (->> p
@@ -75,18 +75,20 @@
      :minute (first minutes)
      :freq (second minutes)}))
 
-; p1 - 1
-; the guard who spent the most minutes asleep : #2441
-(->> (map total-slept data)
-     (sort-by :freq)
-     last)
+(defn parse-gid [s]
+  (->> s
+       (drop 1)
+       (apply str)
+       Integer/parseInt))
 
-;; p1
-(* 2441 39)
+; p1 = (* 2441 39)
+(let [guard (->> (map ->total-and-minutes data)
+                     (sort-by :total)
+                     last)]
+  (* (parse-gid (:gid guard)) (:minute guard)))
 
-;; p2
-(* 239 33)
-
-(comment
-
-  )
+; p2 = (* 239 33)
+(let [guard (->> (map ->total-and-minutes data)
+                 (sort-by :freq)
+                 last)]
+  (* (parse-gid (:gid guard)) (:minute guard)))
