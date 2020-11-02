@@ -1,6 +1,7 @@
-(ns advent_of_code.util)
+(ns advent_of_code.util
+  (:require [clojure.java.io :as io]))
 
-(defn first-duplicate
+b(defn first-duplicate
   ([xs]
    (first-duplicate identity xs))
   ([key-fn xs]
@@ -13,3 +14,6 @@
      (if (set? result)
        nil
        result))))
+
+(defn read-input [path]
+  (line-seq (io/reader (io/resource path))))
