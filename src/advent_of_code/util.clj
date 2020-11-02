@@ -1,7 +1,7 @@
 (ns advent_of_code.util
   (:require [clojure.java.io :as io]))
 
-b(defn first-duplicate
+(defn first-duplicate
   ([xs]
    (first-duplicate identity xs))
   ([key-fn xs]
