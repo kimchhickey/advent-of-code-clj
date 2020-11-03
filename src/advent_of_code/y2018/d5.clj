@@ -22,6 +22,18 @@
 (time
  (count (u/first-duplicate (iterate react input))))
 
+; p2
+(def units (map (fn [c1 c2] (str c1 "|" c2)) alphabet ALPHABET))
+
+(defn remove-units [unit input]
+  (str/replace input (re-pattern unit) ""))
+
+(time
+ (first (->> units
+             (map #(remove-units % input))
+             (map #(count (u/first-duplicate (iterate react %))))
+             sort)))
+
 (comment
 
   )
