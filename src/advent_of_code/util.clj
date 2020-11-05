@@ -1,5 +1,10 @@
 (ns advent_of_code.util
-  (:require [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]))
+
+(def alphabet "abcdefghijklmnopqrstuvwxyz")
+
+(def ALPHABET (str/upper-case alphabet))
 
 (defn first-duplicate
   ([xs]
@@ -17,3 +22,4 @@
 
 (defn read-input [path]
   (line-seq (io/reader (io/resource path))))
+
