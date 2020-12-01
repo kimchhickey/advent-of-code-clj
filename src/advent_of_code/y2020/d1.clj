@@ -31,13 +31,13 @@
   (* x y z))
 
 ;; :when
-(first (for [x input
-             y input
-             :when (= 2020 (+ x y))]
-         (* x y)))
+(set (for [x input
+           y input
+           :when (= 2020 (+ x y))]
+       (* x y)))
 
-(first (for [x input
-             y input
-             z input
-             :when (= 2020 (+ x y z))]
-         (* x y z)))
+(set (for [x input
+           y input
+           z input
+           :when (= 2020 (+ x y z))]
+       (* x y z)))
