@@ -13,12 +13,19 @@
    (let [result (reduce (fn [seen x]
                           (let [k (key-fn x)]
                             (if (seen k)
-                              (reduced x)
+                              (reduced xn)
                               (conj seen k))))
                         #{} xs)]
      (if (set? result)
        nil
        result))))
 
+(defn find-first [pred coll]
+  (reduce (fn [acc itm]
+            (if (pred itm)
+              (reduced itm)
+              acc))
+          nil
+          coll))
 (defn read-input [path]
   (line-seq (io/reader (io/resource path))))
