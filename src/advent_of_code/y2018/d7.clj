@@ -4,31 +4,31 @@
             [advent_of_code.util :as u]))
 
 (def input
-  (u/read-input "y2018/d7.input"))
+  (u/read-input "y2018/d7.sh.input"))
 
 (defn ->extract-node [input]
   (let [extract (fn [s]
-                  (let [ws (str/split s #" ")
+                  (let [ws     (str/split s #" ")
                         parent (keyword (nth ws 1))
-                        child (keyword (nth ws 7))]
+                        child  (keyword (nth ws 7))]
                     [parent child]))]
     (map extract input)))
 
 (def remaining-times
-  (let [initial (+ 60 1)] ;; 0 -> 60 
+  (let [initial (+ 60 1)] ;; 0 -> 60
     (zipmap (map #(keyword (str %)) u/ALPHABET) (range initial (+ initial 26)))))
 
 (defn ->dependency-graph [input]
   (reduce (fn [acc [parent child]]
             (let [old-parent (get acc parent)
-                  old-child (get acc child)
-                  parent' (if (nil? old-parent)
-                            {:remaining-time (get remaining-times parent)
-                             :parents #{}}
+                  old-child  (get acc child)
+                  parent'    (if (nil? old-parent)
+                               {:remaining-time (get remaining-times parent)
+                                :parents        #{}}
                             old-parent)
-                  child' (if (nil? old-child)
-                           {:remaining-time (get remaining-times child)
-                            :parents #{parent}}
+                  child'     (if (nil? old-child)
+                               {:remaining-time (get remaining-times child)
+                                :parents        #{parent}}
                            (assoc old-child :parents (conj (:parents old-child) parent)))]
               (assoc acc parent parent' child child')))
           {}
@@ -40,7 +40,7 @@
        ->dependency-graph))
 
 (defn complete-jobs [todo doing done]
-  (let [find-done-now (fn [doing]
+  (let [find-done-now     (fn [doing]
                         (->> doing
                              (filter (fn [[k m]] (= (:remaining-time m) 0)))
                              (map first)))
@@ -49,10 +49,10 @@
                                  (map (fn [[k m]]
                                         {k (assoc m :parents (apply disj (:parents m) done-now))}))
                                  (apply merge)))
-        done-now (find-done-now doing)
-        todo' (remove-dependency todo done-now)
-        doing' (apply dissoc doing done-now)
-        done' (apply conj done done-now)]
+        done-now          (find-done-now doing)
+        todo'             (remove-dependency todo done-now)
+        doing'            (apply dissoc doing done-now)
+        done'             (apply conj done done-now)]
     [todo' doing' done']))
 
 (defn do-jobs [doing sec]
@@ -73,19 +73,23 @@
             (nil? next-job))
       [todo doing]
       (let [doing' (into {} (conj doing next-job))
-            todo' (dissoc todo (first next-job))]
+            todo'  (dissoc todo (first next-job))]
         (assign-jobs todo' doing' concurrent-job-num)))))
 
 (defn ->next [state]
-  (let [{:keys [concurrent-job-num sec todo doing done]} state
-        [doing' sec'] (do-jobs doing sec)
+  (let [{:keys [concurrent-job-num
+                sec
+                todo
+                doing
+                done]}        state
+        [doing' sec']         (do-jobs doing sec)
         [todo' doing'' done'] (complete-jobs todo doing' done)
-        [todo'' doing'''] (assign-jobs todo' doing'' concurrent-job-num)]
+        [todo'' doing''']     (assign-jobs todo' doing'' concurrent-job-num)]
     {:concurrent-job-num concurrent-job-num
-     :sec sec'
-     :todo todo''
-     :doing doing'''
-     :done done'}))
+     :sec                sec'
+     :todo               todo''
+     :doing              doing'''
+     :done               done'}))
 
 (defn run [state]
   (if (and (nil? (:todo state)) (empty? (:doing state)))
@@ -110,5 +114,4 @@
 (str/join (map #(str (name %)) (:done (run state0-p1))))
 
 ; p2
-(:sec (run state0-p2))
-
+(:done (run state0-p2))

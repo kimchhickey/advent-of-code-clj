@@ -22,4 +22,3 @@
 
 (defn read-input [path]
   (line-seq (io/reader (io/resource path))))
-
