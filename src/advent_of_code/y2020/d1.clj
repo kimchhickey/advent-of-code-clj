@@ -5,30 +5,39 @@
   (->> (util/read-input "y2020/d1.input")
        (map #(Integer/parseInt %))))
 
-(count input)
+(defn is2020? [v]
+  (= 2020 (:sum v)))
 
 (def p1
-  (for [x (range 0 200)
-        y (range 0 200)]
-    (let [xval (nth input x)
-          yval (nth input y)]
-      {:x xval
-       :y yval
-       :sum (+ xval yval)})))
+  (for [x input
+        y input]
+    {:x x
+     :y y
+     :sum (+ x y)}))
+
+(let [{:keys [x y]} (util/find-first is2020? p1)]
+  (* x y))
 
 (def p2
-  (for [x (range 0 200)
-        y (range 0 200)
-        z (range 0 200)]
-    (let [xval (nth input x)
-          yval (nth input y)
-          zval (nth input z)]
-      {:x xval
-       :y yval
-       :z zval
-       :sum (+ xval yval zval)})))
+  (for [x input
+        y input
+        z input]
+    {:x x
+     :y y
+     :z z
+     :sum (+ x y z)}))
 
-(defn is2020 [x]
-  (= 2020 (:sum x)))
+(let [{:keys [x y z]} (util/find-first is2020? p2)]
+  (* x y z))
 
-(util/find-first is2020 p2)
+;; :when
+(first (for [x input
+             y input
+             :when (= 2020 (+ x y))]
+         (* x y)))
+
+(first (for [x input
+             y input
+             z input
+             :when (= 2020 (+ x y z))]
+         (* x y z)))

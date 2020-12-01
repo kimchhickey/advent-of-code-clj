@@ -13,7 +13,7 @@
    (let [result (reduce (fn [seen x]
                           (let [k (key-fn x)]
                             (if (seen k)
-                              (reduced xn)
+                              (reduced x)
                               (conj seen k))))
                         #{} xs)]
      (if (set? result)
