@@ -27,5 +27,9 @@
               acc))
           nil
           coll))
+
 (defn read-input [path]
-  (line-seq (io/reader (io/resource path))))
+  (->> path
+       (io/resource)
+       (io/reader)
+       (line-seq)))
