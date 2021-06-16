@@ -1,117 +1,134 @@
 (ns advent_of_code.y2018.d7
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [advent_of_code.util :as u]))
+            [clojure.set :as set]))
+
+(defn read-input [path]
+  (-> path io/resource io/reader line-seq))
+
+(defn parse-line
+  [s]
+  (some-> (re-find #"Step ([A-Z]) must be finished before step ([A-Z]) can begin." s)
+          next))
 
 (def input
-  (u/read-input "y2018/d7.sh.input"))
+  "입력을 [letter blocked-by] 인접 리스트 형태로 파싱. 예) [[:C :A] ...]"
+  (->> (read-input "y2018/d7.input")
+       (map parse-line)
+       (map #(map keyword %))))
 
-(defn ->extract-node [input]
-  (let [extract (fn [s]
-                  (let [ws     (str/split s #" ")
-                        parent (keyword (nth ws 1))
-                        child  (keyword (nth ws 7))]
-                    [parent child]))]
-    (map extract input)))
+(defn make-time
+  "알파벳 키워드 입력으로 걸리는 시간을 반환
+   예) :A -> \"A\" -> \\A -> 65 -> 61"
+  [k]
+  (- (int (first (name k))) 4))
 
-(def remaining-times
-  (let [initial (+ 60 1)] ;; 0 -> 60
-    (zipmap (map #(keyword (str %)) u/ALPHABET) (range initial (+ initial 26)))))
+(defn make-initial-steps
+  [l]
+  (reduce
+   (fn [steps letter]
+     (assoc steps letter {:until      (make-time letter)
+                          :now        0
+                          :blocked-by #{}}))
+   (sorted-map)
+   (into #{} (flatten l))))
 
-(defn ->dependency-graph [input]
-  (reduce (fn [acc [parent child]]
-            (let [old-parent (get acc parent)
-                  old-child  (get acc child)
-                  parent'    (if (nil? old-parent)
-                               {:remaining-time (get remaining-times parent)
-                                :parents        #{}}
-                            old-parent)
-                  child'     (if (nil? old-child)
-                               {:remaining-time (get remaining-times child)
-                                :parents        #{parent}}
-                           (assoc old-child :parents (conj (:parents old-child) parent)))]
-              (assoc acc parent parent' child child')))
-          {}
-          input))
+(defn make-steps
+  "인접 리스트를 Step 노드 map으로 변경 생성하고,
+   blocked-by에 의존성을 가진 step의 이름을 넣음
+   최종 형태)
+   {:A {:until ..
+        :now ..
+        :blocked-by #{...}}
+    ... }"
+  [l]
+  (reduce
+   (fn [result [blocked-by letter]]
+     (update-in result [letter :blocked-by] #(conj % blocked-by)))
+   (make-initial-steps l)
+   l))
 
-(def todo
-  (->> input
-       ->extract-node
-       ->dependency-graph))
+(defn take-workable-steps
+  "todo 안에서 blocked-by가 비어있거나, 모두 done 처리된 step 만
+   알파벳 순서로 정렬해서 n개 반환"
+  [n todo done]
+  (let [done-set  (->> done
+                       (map first)
+                       flatten
+                       (into #{}))
+        workable? (fn [[_ {:keys [blocked-by]}]]
+                    (or (empty? blocked-by)
+                        (= blocked-by (set/intersection blocked-by done-set))))]
+    (->> todo
+         (filter workable?)
+         (into (sorted-map))
+         (take n))))
 
-(defn complete-jobs [todo doing done]
-  (let [find-done-now     (fn [doing]
-                        (->> doing
-                             (filter (fn [[k m]] (= (:remaining-time m) 0)))
-                             (map first)))
-        remove-dependency (fn [todo done-now]
-                            (->> todo
-                                 (map (fn [[k m]]
-                                        {k (assoc m :parents (apply disj (:parents m) done-now))}))
-                                 (apply merge)))
-        done-now          (find-done-now doing)
-        todo'             (remove-dependency todo done-now)
-        doing'            (apply dissoc doing done-now)
-        done'             (apply conj done done-now)]
-    [todo' doing' done']))
+(defn assign
+  "doing 안의 step의 갯수가 worker-num 보다 작으면,
+   todo에서 할일을 찾아서 todo에서 빼고 doing에 넣음"
+  [worker-num todo doing done]
+  (let [idle-worker-num (- worker-num (count doing))
+        workable-steps  (take-workable-steps idle-worker-num todo done)
+        todo'           (apply (partial dissoc todo) (keys workable-steps))
+        doing'          (merge doing
+                               workable-steps)]
+    [todo' doing']))
 
-(defn do-jobs [doing sec]
-  (let [doing' (->> doing
-                    (map (fn [[k m]]
-                           [k (update m :remaining-time dec)]))
-                    (into {}))
-        sec' (inc sec)]
-    [doing' sec']))
+(defn work
+  "일하기. sec와 doing에 있는 step의 now를 +1초함."
+  [sec doing]
+  (let [doing' (reduce-kv #(assoc %1 %2 (update %3 :now inc)) {} doing)]
+    [(inc sec) doing']))
 
-(defn assign-jobs [todo doing concurrent-job-num]
-  (let [next-job (->> todo
-                      (filter #(empty? (:parents (second %))))
-                      sort
-                      first)]
-    (if (or (>= (count doing) concurrent-job-num)
-            (empty? todo)
-            (nil? next-job))
-      [todo doing]
-      (let [doing' (into {} (conj doing next-job))
-            todo'  (dissoc todo (first next-job))]
-        (assign-jobs todo' doing' concurrent-job-num)))))
+(defn complete
+  "일을 다 끝난 step을, doing에서 빼고, done에 넣음"
+  [doing done]
+  (let [complete? (fn [[_ v]] (= (:until v)
+                                 (:now v)))
+        doing'    (into {} (filter #(not (complete? %)) doing))
+        done'     (->> doing
+                       (filter complete?)
+                       (reduce (fn [acc itm] (conj acc itm)) done))]
+    [doing' done']))
 
-(defn ->next [state]
-  (let [{:keys [concurrent-job-num
-                sec
-                todo
-                doing
-                done]}        state
-        [doing' sec']         (do-jobs doing sec)
-        [todo' doing'' done'] (complete-jobs todo doing' done)
-        [todo'' doing''']     (assign-jobs todo' doing'' concurrent-job-num)]
-    {:concurrent-job-num concurrent-job-num
-     :sec                sec'
-     :todo               todo''
-     :doing              doing'''
-     :done               done'}))
+(defn next-state
+  "동시에 작업 가능한 수를 입력 받아서, 상태 변환 함수를 생성
+   상태 변환 함수 : 이전 상태의 todo, doing, done을 받아서
+                 1초 후의 todo, doing, done을 반환"
+  [{worker-num :worker-num}]
+  (fn [{:keys [sec todo doing done]
+        :as   state}]
+    (let [[todo doing] (assign worker-num todo doing done)
+          [sec doing]  (work sec doing)
+          [doing done] (complete doing done)]
+      (assoc state
+             :sec   sec
+             :todo  todo
+             :doing doing
+             :done  done))))
 
-(defn run [state]
-  (if (and (nil? (:todo state)) (empty? (:doing state)))
-    state
-    (run (->next state))))
+(defn finished?
+  [state]
+  (and (empty? (:todo state))
+       (empty? (:doing state))))
 
-(def state0-p1
-  {:concurrent-job-num 1
-   :sec -1
-   :todo todo
+(def initial-state
+  {:sec   0
+   :todo  (make-steps input)
    :doing {}
-   :done []})
+   :done  []})
 
-(def state0-p2
-  {:concurrent-job-num 5
-   :sec -1
-   :todo todo
-   :doing {}
-   :done []})
+(def p1-solution
+  (let [next-state-fn (next-state {:worker-num 1})
+        end-state     (first (drop-while #(not (finished? %)) (iterate next-state-fn initial-state)))]
+    (->> (:done end-state)
+         (map first)
+         (map name)
+         (apply str))))
 
-; p1
-(str/join (map #(str (name %)) (:done (run state0-p1))))
+(def p2-solution
+  (let [next-state-fn (next-state {:worker-num 5})
+        end-state     (first (drop-while #(not (finished? %)) (iterate next-state-fn initial-state)))]
+    (:sec end-state)))
 
-; p2
-(:done (run state0-p2))
+(comment)
