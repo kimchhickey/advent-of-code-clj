@@ -66,46 +66,44 @@
 (defn assign
   "doing 안의 step의 갯수가 worker-num 보다 작으면,
    todo에서 할일을 찾아서 todo에서 빼고 doing에 넣음"
-  [worker-num todo doing done]
+  [{:keys [todo doing done]
+    :as   state} worker-num]
   (let [idle-worker-num (- worker-num (count doing))
         workable-steps  (take-workable-steps idle-worker-num todo done)
         todo'           (apply (partial dissoc todo) (keys workable-steps))
         doing'          (merge doing
                                workable-steps)]
-    [todo' doing']))
+    (assoc state :todo todo' :doing doing')))
 
 (defn work
   "일하기. sec와 doing에 있는 step의 now를 +1초함."
-  [sec doing]
+  [{:keys [sec doing]
+    :as   state}]
   (let [doing' (reduce-kv #(assoc %1 %2 (update %3 :now inc)) {} doing)]
-    [(inc sec) doing']))
+    (assoc state :sec (inc sec) :doing doing')))
 
 (defn complete
   "일을 다 끝난 step을, doing에서 빼고, done에 넣음"
-  [doing done]
+  [{:keys [doing done]
+    :as state}]
   (let [complete? (fn [[_ v]] (= (:until v)
                                  (:now v)))
         doing'    (into {} (filter #(not (complete? %)) doing))
         done'     (->> doing
                        (filter complete?)
                        (reduce (fn [acc itm] (conj acc itm)) done))]
-    [doing' done']))
+    (assoc state :doing doing' :done done')))
 
 (defn next-state
   "동시에 작업 가능한 수를 입력 받아서, 상태 변환 함수를 생성
    상태 변환 함수 : 이전 상태의 todo, doing, done을 받아서
                  1초 후의 todo, doing, done을 반환"
   [{worker-num :worker-num}]
-  (fn [{:keys [sec todo doing done]
-        :as   state}]
-    (let [[todo' doing'] (assign worker-num todo doing done)
-          [sec' doing']  (work sec doing')
-          [doing' done'] (complete doing' done)]
-      (assoc state
-             :sec   sec'
-             :todo  todo'
-             :doing doing'
-             :done  done'))))
+  (fn [state]
+    (-> state
+        (assign worker-num)
+        (work)
+        (complete))))
 
 (defn finished?
   [state]
