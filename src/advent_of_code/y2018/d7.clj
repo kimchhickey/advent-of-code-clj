@@ -98,14 +98,14 @@
   [{worker-num :worker-num}]
   (fn [{:keys [sec todo doing done]
         :as   state}]
-    (let [[todo doing] (assign worker-num todo doing done)
-          [sec doing]  (work sec doing)
-          [doing done] (complete doing done)]
+    (let [[todo' doing'] (assign worker-num todo doing done)
+          [sec' doing']  (work sec doing')
+          [doing' done'] (complete doing' done)]
       (assoc state
-             :sec   sec
-             :todo  todo
-             :doing doing
-             :done  done))))
+             :sec   sec'
+             :todo  todo'
+             :doing doing'
+             :done  done'))))
 
 (defn finished?
   [state]
