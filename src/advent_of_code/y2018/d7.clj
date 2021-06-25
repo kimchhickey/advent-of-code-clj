@@ -118,15 +118,19 @@
 
 (def p1-solution
   (let [next-state-fn (next-state {:worker-num 1})
-        end-state     (first (drop-while #(not (finished? %)) (iterate next-state-fn initial-state)))]
-    (->> (:done end-state)
+        final-state   (->> (iterate next-state-fn initial-state)
+                           (drop-while #(not (finished? %)))
+                           first)]
+    (->> (:done final-state)
          (map first)
          (map name)
          (apply str))))
 
 (def p2-solution
   (let [next-state-fn (next-state {:worker-num 5})
-        end-state     (first (drop-while #(not (finished? %)) (iterate next-state-fn initial-state)))]
-    (:sec end-state)))
+        final-state   (->> (iterate next-state-fn initial-state)
+                           (drop-while #(not (finished? %)))
+                           first)]
+    (:sec final-state)))
 
 (comment)
